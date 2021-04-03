@@ -1,0 +1,170 @@
+---
+title: "exploratory analysis"
+author: "Qing Wen"
+date: "2021/3/27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(lme4)
+```
+
+```{r}
+# read in the datasets
+curr_employee <- read_csv("data/black-saber-current-employees.csv")
+hire_phase1 <- read_csv("data/phase1-new-grad-applicants-2020.csv")
+hire_phase2 <- read_csv("data/phase2-new-grad-applicants-2020.csv")
+hire_phase3 <- read_csv("data/phase3-new-grad-applicants-2020.csv")
+hire_final <- read_csv("data/final-hires-newgrad_2020.csv")
+```
+
+## Current employee data
+
+```{r}
+# salary distribution filled by gender
+curr_1 <- curr_employee %>% 
+  mutate(salary = str_replace(salary, "\\$", "")) %>% 
+  mutate(salary = as.integer(str_replace(salary, ",", ""))) 
+curr_1%>% 
+  group_by(employee_id, gender) %>% 
+  summarize(mean_wage = mean(salary)) %>% 
+  ggplot(aes(x = mean_wage, fill = gender)) +
+  geom_histogram() +
+  theme_minimal()
+```
+
+```{r}
+# productivity vs. salary by role_seniority
+curr_1 %>% 
+  ggplot(aes(x = productivity, y = salary, color = gender)) +
+  geom_point() +
+  theme_minimal() +
+  facet_wrap(~role_seniority)
+
+# gender vs. leadership_for_level
+table(curr_1$gender, curr_1$leadership_for_level)
+
+curr_1 %>% 
+  ggplot(aes(x = productivity, y = salary, color = gender)) +
+  geom_point() +
+  theme_minimal() +
+  facet_wrap(~leadership_for_level)
+```
+
+```{r}
+# model without productivity
+mod_noprod <- lmer(salary ~ leadership_for_level + (1|employee_id), data = curr_1)
+# model with productivity
+mod_nogender <- lmer(salary ~ productivity + leadership_for_level + (1|employee_id), data = curr_1)
+lmtest::lrtest(mod_noprod, mod_nogender)
+
+# model with gender
+salary_mod <- lmer(salary ~ productivity + leadership_for_level + gender + (1|employee_id), data = curr_1)
+lmtest::lrtest(mod_nogender, salary_mod)
+
+# model with an additional predictor: role_seniority
+mod_senior <- lmer(salary ~ productivity + leadership_for_level + gender + role_seniority 
+                    + (1|employee_id), data = curr_1)
+lmtest::lrtest(salary_mod, mod_senior)
+
+summary(salary_mod)
+fixef(salary_mod)
+```
+
+- we try to fit a linear mixed effect model with `salary` as the response, `productivity` and `leadership_for_level` as predictors. We treat `employee_id` as our random effects. A more complex model `salary_mod` is fit with the above covariates with an additional `gender` predictor. With a LRT, the result shows that the variable `gender` is significant in determining an employee's salary
+- we need `gender`, `productivity`, `role_seniority` in the model
+
+## Hiring-Phase I
+
+```{r}
+# add indicator variable whether the applicant passes the first phase
+success <- hire_phase2$applicant_id
+hire_phase1 <- hire_phase1 %>% 
+  mutate(pass = ifelse(applicant_id %in% success, 1, 0))
+
+table1 <- table(hire_phase1$gender, hire_phase1$pass)
+prop.table(table1, margin = 2)
+prop.table(table1, margin = 1)
+```
+
+It seems that the phase-I selection is unbiased with gender. 
+
+## Hiring-Phase II
+
+```{r}
+success_2 <- hire_phase3$applicant_id
+hire_phase2 <- hire_phase2 %>% 
+  mutate(pass = ifelse(applicant_id %in% success_2, 1, 0))
+
+temp<- hire_phase2 %>% 
+  filter(pass == 1 & gender == "Man") 
+mean(temp$technical_skills)
+mean(temp$writing_skills)
+mean(temp$speaking_skills)
+
+temp1 <- hire_phase2 %>% 
+  filter(pass == 1 & gender == "Woman")
+mean(temp1$technical_skills)
+mean(temp1$writing_skills)
+mean(temp1$speaking_skills)
+
+temp <- hire_phase2 %>% 
+  filter(pass ==1 ) %>% 
+  pivot_longer(-c())
+
+par(mfrow = c(2, 2))
+temp %>% 
+  ggplot(aes(x = writing_skills, fill = gender)) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal()
+
+temp %>% 
+  ggplot(aes(x = speaking_skills, fill = gender)) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal()
+
+temp %>% 
+  ggplot(aes(x = technical_skills, fill = gender)) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal()
+
+temp %>% 
+  ggplot(aes(x = leadership_presence, fill = gender)) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal()
+
+
+table(temp$gender, temp$technical_skills)
+
+table2 <- table(hire_phase2$gender, hire_phase2$pass)
+mean()
+prop.table(table2, margin = 2)
+prop.table(table2, margin = 1)
+```
+
+- Looking at the people that passed the second phase, 68% of the successful applicants are males.
+- question: is the algorithm based only on the four skills?
+
+## Hiring-Phase III
+
+```{r}
+# find the proportion of male/female in the successful applicants in the final phase
+success_3 <- hire_final$applicant_id
+hire_phase3 <- hire_phase3 %>% 
+  mutate(pass_final = ifelse(applicant_id %in% success_3, 1, 0))
+
+hire_2_3 <- left_join(hire_phase3, hire_phase2, by = "applicant_id")
+
+prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 2)
+prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 1)
+```
+
+- 80% of the successful applicants are males
+- next-step: whether the selected applicants are the ones with the highest interview scores?
+
