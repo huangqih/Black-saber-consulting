@@ -110,10 +110,6 @@ mean(temp1$technical_skills)
 mean(temp1$writing_skills)
 mean(temp1$speaking_skills)
 
-temp <- hire_phase2 %>% 
-  filter(pass ==1 ) %>% 
-  pivot_longer(-c())
-
 par(mfrow = c(2, 2))
 temp %>% 
   ggplot(aes(x = writing_skills, fill = gender)) +
@@ -143,7 +139,6 @@ temp %>%
 table(temp$gender, temp$technical_skills)
 
 table2 <- table(hire_phase2$gender, hire_phase2$pass)
-mean()
 prop.table(table2, margin = 2)
 prop.table(table2, margin = 1)
 ```
