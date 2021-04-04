@@ -102,7 +102,7 @@ _In this section you will summarize your findings across all the research questi
 # Consultant information
 ## Consultant profiles
 
-*Complete this section with a brief bio for each member of your group. If you are completing the project individually, you only need to complete one for yourself. In that case, change the title of this section to 'Consultant profile' instead. Examples below. This section is only marked for completeness, clarity and professionalism, not 'truth' so you can write it as if we're a few years in the future. Put your current degree in as completed and/or add your first choice grad school program, whatever you like. What skills related skills would you most like to highlight? What job title do you want?*
+*This section is only marked for completeness, clarity and professionalism, not 'truth' so you can write it as if we're a few years in the future. Put your current degree in as completed and/or add your first choice grad school program, whatever you like. What skills related skills would you most like to highlight? What job title do you want?*
 
 **Ke Deng**. Ke Deng is a junior analyst at the ProDasta Consulting Company, where she does report writing and data analysis for clients. She graduated from the University of Toronto with a Bachelor degree of Science, and is currently enrolled in the graduate program. Ke specializes in Statistics, with a focus in economics. She has been with the ProDasta Consulting Company since the company started. Ke is currently employed as the report writer and consulter of the company and she is great at writing and polishing reports for the clients.
 
