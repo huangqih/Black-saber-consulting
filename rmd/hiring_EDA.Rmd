@@ -1,0 +1,169 @@
+---
+title: "Hiring_EDA"
+author: "Qing Wen"
+date: "2021/4/5"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(lme4)
+```
+
+## Read in the data
+```{r}
+hire_phase1 <- read_csv("~/303 final/Black-saber-consulting/data/phase1-new-grad-applicants-2020.csv")
+hire_phase2 <- read_csv("~/303 final/Black-saber-consulting/data/phase2-new-grad-applicants-2020.csv")
+hire_phase3 <- read_csv("~/303 final/Black-saber-consulting/data/phase3-new-grad-applicants-2020.csv")
+hire_final <- read_csv("~/303 final/Black-saber-consulting/data/final-hires-newgrad_2020.csv")
+```
+
+
+
+## Hiring-Phase I
+
+```{r}
+# add indicator variable whether the applicant passes the first phase
+success <- hire_phase2$applicant_id
+hire_phase1 <- hire_phase1 %>% 
+  mutate(pass = ifelse(applicant_id %in% success, 1, 0))
+
+table1 <- table(hire_phase1$gender, hire_phase1$pass)
+prop.table(table1, margin = 2)
+prop.table(table1, margin = 1)
+```
+
+It seems that the phase-I selection is unbiased with gender. 
+
+```{r}
+hire_phase1 %>% 
+  filter(pass == 1) %>% 
+  ggplot(aes(x = gpa, fill = gender)) +
+  geom_histogram() +
+  theme_minimal()
+```
+
+## Build model
+
+```{r}
+hire1_mod <- glm(pass~cover_letter + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
+
+hire1_mod_wg <- glm(pass~ gender + cover_letter + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
+
+summary(hire1_mod)
+summary(hire1_mod_wg)
+
+lmtest::lrtest(hire1_mod, hire1_mod_wg)
+```
+- gender does not seem to play a role in selection process
+
+## Hiring-Phase II
+
+```{r}
+success_2 <- hire_phase3$applicant_id
+hire_phase2 <- hire_phase2 %>% 
+  mutate(pass = ifelse(applicant_id %in% success_2, 1, 0))
+
+# getting some summary statistics for gender
+temp<- hire_phase2 %>% 
+  filter(pass == 1 & gender == "Man") 
+mean(temp$technical_skills)
+mean(temp$writing_skills)
+mean(temp$speaking_skills)
+
+temp1 <- hire_phase2 %>%
+  filter(pass == 1 & gender == "Woman")
+mean(temp1$technical_skills)
+mean(temp1$writing_skills)
+mean(temp1$speaking_skills)
+
+summary(temp)
+summary(temp1)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+temp %>% 
+  ggplot(aes(x = writing_skills, fill = gender)) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal()
+
+temp %>% 
+  ggplot(aes(x = speaking_skills, fill = gender)) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal()
+
+temp %>% 
+  ggplot(aes(x = technical_skills, fill = gender)) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal()
+
+temp %>% 
+  ggplot(aes(x = leadership_presence, fill = gender)) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal()
+
+
+table(temp$gender, temp$technical_skills)
+
+table2 <- table(hire_phase2$gender, hire_phase2$pass)
+prop.table(table2, margin = 2)
+prop.table(table2, margin = 1)
+```
+
+- Looking at the people that passed the second phase, 68% of the successful applicants are males.
+- question: is the algorithm based only on the four skills?
+
+### Verify assumptions
+
+- the cases are independently distributed
+- the dependent variable follows a binomial distribution
+
+
+### Build a model
+
+```{r}
+# build a logistic model
+hire2_mod <- glm(pass~technical_skills + writing_skills + leadership_presence + speaking_skills, family = binomial(), data = hire_phase2)
+hire2_mod_wg <- glm(pass~gender + technical_skills + writing_skills + leadership_presence + speaking_skills, family = binomial(), data = hire_phase2)
+
+lmtest::lrtest(hire2_mod, hire2_mod_wg)
+
+summary(hire2_mod)
+```
+
+- gender does not play a role in hiring-2, as including gender in the model does not improve the model by much, and the term is not significant
+
+## Hiring-Phase III
+
+```{r}
+# find the proportion of male/female in the successful applicants in the final phase
+success_3 <- hire_final$applicant_id
+hire_phase3 <- hire_phase3 %>% 
+  mutate(pass_final = ifelse(applicant_id %in% success_3, 1, 0))
+
+
+
+hire_2_3 <- left_join(hire_phase3, hire_phase2, by = "applicant_id") 
+
+prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 2)
+prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 1)
+```
+
+- 80% of the successful applicants are males
+- next-step: whether the selected applicants are the ones with the highest interview scores?
+
+### Build model
+```{r}
+hire3_mod <- glm(pass_final~interviewer_rating_1 + interviewer_rating_2, family = binomial(), data = hire_phase3)
+hire3_mod_wg <- glm(pass_final~gender + interviewer_rating_1 + interviewer_rating_2, family = binomial(), data = hire_2_3)
+summary(hire3_mod)
+summary(hire3_mod_wg)
+lmtest::lrtest(hire3_mod, hire3_mod_wg)
+```
+
