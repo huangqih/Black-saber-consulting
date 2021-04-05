@@ -57,6 +57,22 @@ curr_1 %>%
 ```
 
 ```{r}
+# man vs woman employees current level satistication
+curr_1%>% 
+  group_by(employee_id, gender, leadership_for_level) %>% 
+  summarize(mean_wage = mean(salary)) %>% 
+  filter(gender != "Prefer not to say") %>%
+  ggplot(aes(x = mean_wage, fill=leadership_for_level)) +
+  facet_wrap(~gender) +
+  geom_histogram() +
+  theme_minimal() +
+  #coord_flip() +
+  stat_bin(bins=25) +
+  labs(x="Mean salary", y="Number of employees", title="Distribution of mean salary of each current employees",subtitle="Classifed by satisfication", fill = "Satisfication") +
+  scale_fill_manual(values = c("#FFC300", "#D5F2DF", "#538708"))
+```
+
+```{r}
 # model without productivity
 mod_noprod <- lmer(salary ~ leadership_for_level + (1|employee_id), data = curr_1)
 # model with productivity
