@@ -21,16 +21,16 @@ library(tidyverse)
 library(lme4)
 library(knitr)
 # this should supress all code and messages
-knitr::opts_chunk$set(include=FALSE)
+knitr::opts_chunk$set(echo=FALSE, message = FALSE, warning = FALSE)
 ```
 
 ```{r}
 # read in the data
-curr_employee <- read_csv("~/303 final/Black-saber-consulting/data/black-saber-current-employees.csv")
-hire_phase1 <- read_csv("~/303 final/Black-saber-consulting/data/phase1-new-grad-applicants-2020.csv")
-hire_phase2 <- read_csv("~/303 final/Black-saber-consulting/data/phase2-new-grad-applicants-2020.csv")
-hire_phase3 <- read_csv("~/303 final/Black-saber-consulting/data/phase3-new-grad-applicants-2020.csv")
-hire_final <- read_csv("~/303 final/Black-saber-consulting/data/final-hires-newgrad_2020.csv")
+curr_employee <- read_csv("data/black-saber-current-employees.csv")
+hire_phase1 <- read_csv("data/phase1-new-grad-applicants-2020.csv")
+hire_phase2 <- read_csv("data/phase2-new-grad-applicants-2020.csv")
+hire_phase3 <- read_csv("data/phase3-new-grad-applicants-2020.csv")
+hire_final <- read_csv("data/final-hires-newgrad_2020.csv")
 ```
 
 
@@ -127,9 +127,9 @@ prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 2)
 
 Table 1: Coefficient estimates for the logistic model built for hiring phase-I
 
-```{r}
+```{r, warning=TRUE}
 # build model
-hire1_mod_wg <- glm(pass~ gender + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
+hire1_mod_wg <- glm(pass ~ gender + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
 
 hire1_ci <- confint(hire1_mod_wg)
 
