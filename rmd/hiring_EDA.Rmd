@@ -20,7 +20,6 @@ hire_final <- read_csv("~/303 final/Black-saber-consulting/data/final-hires-newg
 ```
 
 
-
 ## Hiring-Phase I
 
 ```{r}
@@ -47,6 +46,9 @@ hire_phase1 %>%
 ## Build model
 
 ```{r}
+# presence of cover letter
+hire1_mod_nocl <- hire1_mod <- glm(pass~cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
+
 hire1_mod <- glm(pass~cover_letter + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
 
 hire1_mod_wg <- glm(pass~ gender + cover_letter + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
@@ -54,9 +56,10 @@ hire1_mod_wg <- glm(pass~ gender + cover_letter + cv + gpa + extracurriculars + 
 summary(hire1_mod)
 summary(hire1_mod_wg)
 
-lmtest::lrtest(hire1_mod, hire1_mod_wg)
+lmtest::lrtest(hire1_mod_nocl, hire1_mod)
 ```
 - gender does not seem to play a role in selection process
+- don't need cover letter in the model (by LRT)
 
 ## Hiring-Phase II
 
@@ -130,10 +133,11 @@ prop.table(table2, margin = 1)
 ```{r}
 # build a logistic model
 hire2_mod <- glm(pass~technical_skills + writing_skills + leadership_presence + speaking_skills, family = binomial(), data = hire_phase2)
+
 hire2_mod_wg <- glm(pass~gender + technical_skills + writing_skills + leadership_presence + speaking_skills, family = binomial(), data = hire_phase2)
 
 lmtest::lrtest(hire2_mod, hire2_mod_wg)
-
+summary(hire2_mod_wg)
 summary(hire2_mod)
 ```
 

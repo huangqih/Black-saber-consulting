@@ -18,9 +18,21 @@ titlepage-rule-height: 2
 
 ```{r, message = FALSE, echo=FALSE}
 library(tidyverse)
+library(lme4)
+library(knitr)
 # this should supress all code and messages
 knitr::opts_chunk$set(include=FALSE)
 ```
+
+```{r}
+# read in the data
+curr_employee <- read_csv("~/303 final/Black-saber-consulting/data/black-saber-current-employees.csv")
+hire_phase1 <- read_csv("~/303 final/Black-saber-consulting/data/phase1-new-grad-applicants-2020.csv")
+hire_phase2 <- read_csv("~/303 final/Black-saber-consulting/data/phase2-new-grad-applicants-2020.csv")
+hire_phase3 <- read_csv("~/303 final/Black-saber-consulting/data/phase3-new-grad-applicants-2020.csv")
+hire_final <- read_csv("~/303 final/Black-saber-consulting/data/final-hires-newgrad_2020.csv")
+```
+
 
 # General comments (you can delete this section)
 
@@ -58,6 +70,113 @@ _Provide a brief introduction to your report and outline what the report will co
 ### Research questions
 _Use bullet points to to describe the research questions you are going to address. Write in full sentences._
 
+- Do males have a higher chance of being a successful candidate in each phase of the AI-directed selection than other genders do?
+
+## Is gender a significant determinant of being a successful applicant
+
+### Data Manipulation
+
+### Exploratory plots/summary tables
+
+Table 1: Conditional probability table for phase-I candidates
+
+```{r}
+# add indicator variables of whether the applicant passed phase-I
+success <- hire_phase2$applicant_id
+hire_phase1 <- hire_phase1 %>% 
+  mutate(pass = ifelse(applicant_id %in% success, 1, 0))
+
+table1 <- table(hire_phase1$gender, hire_phase1$pass)
+prop_t1 <- prop.table(table1, margin = 2)
+colnames(prop_t1) <- c("Does not pass", "Pass")
+knitr::kable(prop_t1)
+```
+
+Table 2: Conditional probability table for phase-II candidates
+
+```{r}
+# add indicator variables of whether the applicant passed phase-II
+success_2 <- hire_phase3$applicant_id
+hire_phase2 <- hire_phase2 %>% 
+  mutate(pass = ifelse(applicant_id %in% success_2, 1, 0))
+
+table2 <- table(hire_phase2$gender, hire_phase2$pass)
+prop_t2 <- prop.table(table2, margin = 2)
+colnames(prop_t2) <- c("Does not pass", "Pass")
+knitr::kable(prop_t2)
+```
+
+Table 2: Conditional probability table for phase-III candidates
+
+```{r}
+success_3 <- hire_final$applicant_id
+hire_phase3 <- hire_phase3 %>% 
+  mutate(pass_final = ifelse(applicant_id %in% success_3, 1, 0))
+hire_2_3 <- left_join(hire_phase3, hire_phase2, by = "applicant_id") 
+
+table3 <- table(hire_2_3$gender, hire_2_3$pass_final)
+prop_t3 <- prop.table(table3, margin = 2)
+colnames(prop_t3) <- c("Does not pass", "Pass")
+
+knitr::kable(prop_t3)
+prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 2)
+```
+
+
+### Models
+
+Table 1: Coefficient estimates for the logistic model built for hiring phase-I
+
+```{r}
+# build model
+hire1_mod_wg <- glm(pass~ gender + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
+
+hire1_ci <- confint(hire1_mod_wg)
+
+# table for reporting
+ests_h1 <- format(round(exp(summary(hire1_mod_wg)$coef)[, 1], 2), nsmall = 2)
+cis_h1 <- format(round(exp(hire1_ci), 6), nsmall = 2)
+cis_h1 <- str_c("(", trimws(cis_h1[, 1]), ", ", cis_h1[, 2], ")")
+pval_h1 <- format(round(summary(hire1_mod_wg)$coefficients[, 4], 4), 2)
+hire1_rownames <- c("Baseline odds", "Gender: Prefer not to say", "Gender: Woman", "CV", "GPA", "Extracurriculars", "Work experience")
+
+hire1_colnames <- c("Estimates", "95% CI", "P-value")
+
+hire1_mod_table <- cbind(ests_h1, cis_h1, pval_h1)
+rownames(hire1_mod_table) <- hire1_rownames
+colnames(hire1_mod_table) <- hire1_colnames
+knitr::kable(hire1_mod_table, align = c("r", "r"))
+```
+
+
+Table 2: Coefficient estimates for the logistic model built for hiring phase-II
+
+```{r}
+# build model
+hire2_mod_wg <- glm(pass~gender + technical_skills + writing_skills + leadership_presence + speaking_skills, family = "binomial", data = hire_phase2)
+
+hire2_ci <- confint(hire2_mod_wg)
+
+# table for reporting
+ests_h2 <- format(round(exp(summary(hire2_mod_wg)$coef)[, 1], 2), nsmall = 2)
+cis_h2 <- format(round(exp(hire2_ci), 6), nsmall = 2)
+cis_h2 <- str_c("(", trimws(cis_h2[, 1]), ", ", cis_h2[, 2], ")")
+pval_h2 <- format(round(summary(hire2_mod_wg)$coefficients[, 4], 4), 2)
+hire2_rownames <- c("Baseline odds", "Gender: Prefer not to say", "Gender: Woman", "Technical skills", "Writing skills", "Leadership_presence", "Speaking_skills")
+
+hire2_colnames <- c("Estimates", "95% CI", "P-value")
+
+hire2_mod_table <- cbind(ests_h2, cis_h2, pval_h2)
+rownames(hire2_mod_table) <- hire2_rownames
+colnames(hire2_mod_table) <- hire2_colnames
+knitr::kable(hire2_mod_table, align = c("r", "r"))
+```
+
+
+### Conclusions
+
+
+
 ## Informative title for section addressing a research question
 
 _For each research question, you will want to briefly describe any data manipulation, show some exploratory plots/summary tables, report on any methods you use (i.e. models you fit) and the conclusions you draw from these_
@@ -84,7 +203,6 @@ ggsave("images/example.png", width = 7, height = 4)
 
 ![](images/example.png)
 
-## Informative title for section addressing a research question
 ## Informative title for section addressing a research question
 
 ```{r, include = FALSE}
