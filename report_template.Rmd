@@ -106,7 +106,7 @@ colnames(prop_t2) <- c("Does not pass", "Pass")
 knitr::kable(prop_t2)
 ```
 
-Table 2: Conditional probability table for phase-III candidates
+Table 3: Conditional probability table for phase-III candidates
 
 ```{r}
 success_3 <- hire_final$applicant_id
@@ -122,6 +122,12 @@ knitr::kable(prop_t3)
 prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 2)
 ```
 
+#### Interpretation on summary tables before model fitting
+#### Make any modifications if you want. btw originial version on google doc
+
+Before we officially fit models, we build proportion tables to show the percentage of new graduates applicants who admitted to the next round. From table 1, conditional probability table for phase-I candidates, there is no obvious difference between the passing rate of males and females (males: 48.33%, females: 50.67%), therefore about half of the candidates go to the next round (phase-II). For table 2 and table 3, a significant difference of the passing rate is exhibited here.  The passing rate for male applicants is more than twice that for female applicants; 68.18% males in the first round successfully go into the final interview, while there is only 31.81% females. The final round, which decides who gets the job, shows an even larger difference between the passing rate. Here, 80% of the males in the last get the job offer, where only 20% females get in eventually. Most of the female applicants stop in the second round.
+
+At this time, we cannot make any inference or conclusion on who is more likely being a successful candidate. After we fit models and assess relationships among different factors like GPA, work experience, and technical skills etc., we may make inferences at that time.
 
 ### Models
 
@@ -130,7 +136,7 @@ Table 1: Coefficient estimates for the logistic model built for hiring phase-I
 ```{r, warning=TRUE}
 # build model
 hire1_mod_wg <- glm(pass ~ gender + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
-
+summary(hire1_mod_wg)
 hire1_ci <- confint(hire1_mod_wg)
 
 # table for reporting
