@@ -31,35 +31,67 @@ hire_phase1 <- hire_phase1 %>%
 table1 <- table(hire_phase1$gender, hire_phase1$pass)
 prop.table(table1, margin = 2)
 prop.table(table1, margin = 1)
+
+hire_phase1_filtered <- hire_phase1 %>% 
+  filter(cover_letter == 1) %>% 
+  filter(cv ==1)
 ```
 
 It seems that the phase-I selection is unbiased with gender. 
 
+### Visualizations
+
 ```{r}
+hire_phase1 <- hire_phase1 %>% 
+  mutate(cover_letter = as.factor(cover_letter)) %>% 
+  mutate(cv = as.factor(cv))
+
+
+# proportion of successful applicants within each sex gruop
 hire_phase1 %>% 
-  filter(pass == 1) %>% 
-  ggplot(aes(x = gpa, fill = gender)) +
-  geom_histogram() +
-  theme_minimal()
+  ggplot(aes(x = cv, fill = as.factor(pass))) +
+  geom_bar(position = "fill") +
+  facet_wrap(~gender) +
+  scale_fill_grey() +
+  ylab("Proportion") +
+  theme_minimal() +
+  labs(fill = "Pass", x = "CV", y = "Proportion")
+
+table(hire_phase1$cv, hire_phase1$pass)
+
+# proportion of successful applicants vs. gender and cover letter
+hire_phase1 %>% 
+  ggplot(aes(x = cover_letter, fill = as.factor(pass))) +
+  geom_bar(position = "fill") +
+  facet_wrap(~gender) +
+  scale_fill_grey() +
+  ylab("Proportion") +
+  theme_minimal() +
+  labs(fill = "Pass", x = "Cover letter", y = "Proportion")
 ```
+
+- applicants without a cv did not pass phase I
+- applicants without a cover letter did not pass phase I
+
 
 ## Build model
 
 ```{r}
-# presence of cover letter
-hire1_mod_nocl <- hire1_mod <- glm(pass~cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
+hire1_mod <- glm(pass ~ gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
 
-hire1_mod <- glm(pass~cover_letter + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
+hire1_mod_wg <- glm(pass ~ gender + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
 
-hire1_mod_wg <- glm(pass~ gender + cover_letter + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
+# hire1_mod_fil <- glm(pass ~ gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1_filtered)
 
 summary(hire1_mod)
 summary(hire1_mod_wg)
 
-lmtest::lrtest(hire1_mod_nocl, hire1_mod)
+lmtest::lrtest(hire1_mod, hire1_mod_wg)
 ```
+
 - gender does not seem to play a role in selection process
-- don't need cover letter in the model (by LRT)
+- we pick `hire1_mod` as our model for phase-I
+- __Question: whether we want to filter out all the applicants without a cv or cover letter__
 
 ## Hiring-Phase II
 
@@ -85,31 +117,38 @@ summary(temp)
 summary(temp1)
 ```
 
+### Visualizations
+
 ```{r}
 par(mfrow = c(2, 2))
-temp %>% 
-  ggplot(aes(x = writing_skills, fill = gender)) +
-  geom_histogram() +
-  facet_wrap(~gender) +
-  theme_minimal()
 
-temp %>% 
-  ggplot(aes(x = speaking_skills, fill = gender)) +
+hire_phase2 %>% 
+  ggplot(aes(x = technical_skills, fill = as.factor(pass))) +
   geom_histogram() +
   facet_wrap(~gender) +
-  theme_minimal()
+  theme_minimal() +
+  labs(fill = "Pass", x = "Technical skills")
 
-temp %>% 
-  ggplot(aes(x = technical_skills, fill = gender)) +
-  geom_histogram() +
+hire_phase2 %>% 
+  ggplot(aes(x = speaking_skills, fill = as.factor(pass))) +
+  geom_bar() +
   facet_wrap(~gender) +
-  theme_minimal()
+  theme_minimal() +
+  labs(fill = "Pass", x = "Speaking skills")
 
-temp %>% 
-  ggplot(aes(x = leadership_presence, fill = gender)) +
+hire_phase2 %>% 
+  ggplot(aes(x = writing_skills, fill = as.factor(pass))) +
   geom_histogram() +
   facet_wrap(~gender) +
-  theme_minimal()
+  theme_minimal() +
+  labs(fill = "Pass", x = "Writing skills")
+
+hire_phase2 %>% 
+  ggplot(aes(x = leadership_presence, fill = as.factor(pass))) +
+  geom_bar() +
+  facet_wrap(~gender) +
+  theme_minimal() +
+  labs(fill = "Pass", x = "Leadership presence")
 
 
 table(temp$gender, temp$technical_skills)
@@ -120,13 +159,13 @@ prop.table(table2, margin = 1)
 ```
 
 - Looking at the people that passed the second phase, 68% of the successful applicants are males.
-- question: is the algorithm based only on the four skills?
+- Looking at the four skills, it seems that the algorithm is fair in selecting applicants based on the skills. 
+- __Question: on average, does it seem that more males are selected than females within the same score interval?__
 
 ### Verify assumptions
 
 - the cases are independently distributed
 - the dependent variable follows a binomial distribution
-
 
 ### Build a model
 
@@ -152,7 +191,6 @@ hire_phase3 <- hire_phase3 %>%
   mutate(pass_final = ifelse(applicant_id %in% success_3, 1, 0))
 
 
-
 hire_2_3 <- left_join(hire_phase3, hire_phase2, by = "applicant_id") 
 
 prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 2)
@@ -162,12 +200,32 @@ prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 1)
 - 80% of the successful applicants are males
 - next-step: whether the selected applicants are the ones with the highest interview scores?
 
+### Visualization
+```{r}
+hire_2_3 %>% 
+  ggplot(aes(x = interviewer_rating_1, fill = as.factor(pass_final))) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal() +
+  labs(fill = "Pass", x = "Interview rating 1")
+
+hire_2_3 %>% 
+  ggplot(aes(x = interviewer_rating_2, fill = as.factor(pass_final))) +
+  geom_histogram() +
+  facet_wrap(~gender) +
+  theme_minimal() +
+  labs(fill = "Pass", x = "Interview rating 2")
+```
+
+
+
 ### Build model
 ```{r}
-hire3_mod <- glm(pass_final~interviewer_rating_1 + interviewer_rating_2, family = binomial(), data = hire_phase3)
-hire3_mod_wg <- glm(pass_final~gender + interviewer_rating_1 + interviewer_rating_2, family = binomial(), data = hire_2_3)
+hire3_mod <- glm(pass_final ~ interviewer_rating_1 + interviewer_rating_2, family = binomial(), data = hire_2_3)
+hire3_mod_wg <- glm(pass_final ~ gender + interviewer_rating_1 + interviewer_rating_2, family = binomial(), data = hire_2_3)
 summary(hire3_mod)
 summary(hire3_mod_wg)
 lmtest::lrtest(hire3_mod, hire3_mod_wg)
 ```
 
+- __Problem: too few observations__
