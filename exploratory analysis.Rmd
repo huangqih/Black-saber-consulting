@@ -28,7 +28,9 @@ curr_1%>%
   summarize(mean_wage = mean(salary)) %>% 
   ggplot(aes(x = mean_wage, fill = gender)) +
   geom_histogram() +
-  theme_minimal()
+  theme_minimal() +
+  labs(x="Mean salary", y="Number of employees", title="Distribution of mean salary of each current employees",subtitle="Classifed by genders") +
+  scale_fill_manual(values = c("#FFC300", "#D5F2DF", "#538708"))
 
 # summary statistics for different gender groups
 summary(curr_1[curr_1$gender == "Man",])
@@ -52,6 +54,22 @@ curr_1 %>%
   geom_point() +
   theme_minimal() +
   facet_wrap(~leadership_for_level)
+```
+
+```{r}
+# man vs woman employees current level satistication
+curr_1%>% 
+  group_by(employee_id, gender, leadership_for_level) %>% 
+  summarize(mean_wage = mean(salary)) %>% 
+  filter(gender != "Prefer not to say") %>%
+  ggplot(aes(x = mean_wage, fill=leadership_for_level)) +
+  facet_wrap(~gender) +
+  geom_histogram() +
+  theme_minimal() +
+  #coord_flip() +
+  stat_bin(bins=25) +
+  labs(x="Mean salary", y="Number of employees", title="Distribution of mean salary of each current employees",subtitle="Classifed by satisfication", fill = "Satisfication") +
+  scale_fill_manual(values = c("#FFC300", "#D5F2DF", "#538708"))
 ```
 
 ```{r}
