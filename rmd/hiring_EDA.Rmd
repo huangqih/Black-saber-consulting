@@ -12,11 +12,12 @@ library(lme4)
 ```
 
 ## Read in the data
+
 ```{r}
 hire_phase1 <- read_csv("~/303 final/Black-saber-consulting/data/phase1-new-grad-applicants-2020.csv")
 hire_phase2 <- read_csv("~/303 final/Black-saber-consulting/data/phase2-new-grad-applicants-2020.csv")
 hire_phase3 <- read_csv("~/303 final/Black-saber-consulting/data/phase3-new-grad-applicants-2020.csv")
-hire_final <- read_csv("~/303 final/Black-saber-consulting/data/phase1-new-grad-applicants-2020.csv")
+hire_final <- read_csv("~/303 final/Black-saber-consulting/data/final-hires-newgrad_2020.csv")
 ```
 
 
@@ -223,7 +224,6 @@ hire_2_3 %>%
   theme_minimal() +
   labs(fill = "Pass", x = "Interview rating 2")
 ```
-
 
 
 ### Build model
