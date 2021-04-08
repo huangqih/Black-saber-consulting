@@ -21,7 +21,7 @@ library(tidyverse)
 library(lme4)
 library(knitr)
 # this should supress all code and messages
-knitr::opts_chunk$set(echo=FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.height = 4)
+knitr::opts_chunk$set(echo=FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.height = 3.5)
 ```
 
 ```{r}
@@ -100,7 +100,6 @@ Table 1: Conditional probability table for the three phases of hiring
 | Gender            | Phase I       |       | Phase II      |       | Phase III     |       |
 |-------------------|---------------|-------|---------------|-------|---------------|-------|
 |                   | Does not pass | Pass  | Does not pass | Pass  | Does not pass | Pass  |
-|-------------------|---------------|-------|---------------|-------|---------------|-------|
 | Man               | 0.467         | 0.483 | 0.468         | 0.682 | 0.583         | 0.800 |
 | Prefer not to say | 0.026         | 0.010 | 0.011         | 0.000 |               |       |
 | Woman             | 0.508         | 0.507 | 0.522         | 0.318 | 0.417         | 0.200 |
@@ -134,6 +133,7 @@ hire_phase1_temp %>%
   theme_minimal() +
   labs(fill = "Pass", x = "Cover letter", y = "Proportion")
 ```
+
 
 Table 2: Applicants' total score on the interview vs. whether they pass phase III
 
