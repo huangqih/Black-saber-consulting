@@ -104,6 +104,17 @@ Table 1: Conditional probability table for the three phases of hiring
 | Prefer not to say | 0.026         | 0.010 | 0.011         | 0.000 |               |       |
 | Woman             | 0.508         | 0.507 | 0.522         | 0.318 | 0.417         | 0.200 |
 
+\begin{table}[]
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Gender            & \multicolumn{2}{c|}{Phase 1} & \multicolumn{2}{c|}{Phase 2} & \multicolumn{2}{c|}{Phase 3} \\ \hline
+                  & Does not pass     & Pass     & Does not pass     & Pass     & Does not pass     & Pass     \\ \hline
+Man               & 0.467             & 0.483    & 0.468             & 0.682    & 0.583             & 0.800    \\ \hline
+Prefer not to say & 0.026             & 0.010    & 0.011             & 0.000    &                   &          \\ \hline
+Woman             & 0.508             & 0.507    & 0.522             & 0.318    & 0.417             & 0.200    \\ \hline
+\end{tabular}
+\end{table}
+
 ```{r, fig.cap="Proportion of people passed phase I by gender and cv"}
 hire_phase1_temp <- hire_phase1 %>% 
   mutate(cover_letter = as.factor(ifelse(cover_letter == 0, "No", "Yes"))) %>% 
