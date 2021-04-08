@@ -10,18 +10,18 @@ output:
     toc: true
     toc_depth: 2
 titlepage: true
-titlepage-color: "6C3082"
+titlepage-color: "#51c6b9"
 titlepage-text-color: "FFFFFF"
 titlepage-rule-color: "FFFFFF"
 titlepage-rule-height: 2
 ---
 
-```{r, message = FALSE, echo=FALSE}
+```{r, message = FALSE, echo = FALSE}
 library(tidyverse)
 library(lme4)
 library(knitr)
 # this should supress all code and messages
-knitr::opts_chunk$set(echo=FALSE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo=FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.height = 4)
 ```
 
 ```{r}
@@ -72,13 +72,11 @@ _Use bullet points to to describe the research questions you are going to addres
 
 - Do males have a higher chance of being a successful candidate in each phase of the AI-directed selection than other genders do?
 
-## Is gender a significant determinant of being a successful applicant
+## Is gender a significant determinant of being a successful applicant in each hiring phase?
 
 ### Data Manipulation
 
 ### Exploratory plots/summary tables
-
-Table 1: Conditional probability table for phase-I candidates
 
 ```{r}
 # add indicator variables of whether the applicant passed phase-I
@@ -86,41 +84,69 @@ success <- hire_phase2$applicant_id
 hire_phase1 <- hire_phase1 %>% 
   mutate(pass = ifelse(applicant_id %in% success, 1, 0))
 
-table1 <- table(hire_phase1$gender, hire_phase1$pass)
-prop_t1 <- prop.table(table1, margin = 2)
-colnames(prop_t1) <- c("Does not pass", "Pass")
-knitr::kable(prop_t1)
-```
-
-Table 2: Conditional probability table for phase-II candidates
-
-```{r}
 # add indicator variables of whether the applicant passed phase-II
 success_2 <- hire_phase3$applicant_id
 hire_phase2 <- hire_phase2 %>% 
   mutate(pass = ifelse(applicant_id %in% success_2, 1, 0))
 
-table2 <- table(hire_phase2$gender, hire_phase2$pass)
-prop_t2 <- prop.table(table2, margin = 2)
-colnames(prop_t2) <- c("Does not pass", "Pass")
-knitr::kable(prop_t2)
-```
-
-Table 3: Conditional probability table for phase-III candidates
-
-```{r}
+# add indicator variable of whether the applicant passed phase-III
 success_3 <- hire_final$applicant_id
 hire_phase3 <- hire_phase3 %>% 
   mutate(pass_final = ifelse(applicant_id %in% success_3, 1, 0))
-hire_2_3 <- left_join(hire_phase3, hire_phase2, by = "applicant_id") 
-
-table3 <- table(hire_2_3$gender, hire_2_3$pass_final)
-prop_t3 <- prop.table(table3, margin = 2)
-colnames(prop_t3) <- c("Does not pass", "Pass")
-
-knitr::kable(prop_t3)
-prop.table(table(hire_2_3$gender, hire_2_3$pass_final), margin = 2)
 ```
+
+Table 1: Conditional probability table for the three phases of hiring
+
+| Gender            | Phase I       |       | Phase II      |       | Phase III     |       |
+|-------------------|---------------|-------|---------------|-------|---------------|-------|
+|                   | Does not pass | Pass  | Does not pass | Pass  | Does not pass | Pass  |
+| Man               | 0.467         | 0.483 | 0.468         | 0.682 | 0.583         | 0.800 |
+| Prefer not to say | 0.026         | 0.010 | 0.011         | 0.000 |               |       |
+| Woman             | 0.508         | 0.507 | 0.522         | 0.318 | 0.417         | 0.200 |
+
+```{r, fig.cap="Proportion of people passed phase I by gender and cv/cover letter"}
+hire_phase1_temp <- hire_phase1 %>% 
+  mutate(cover_letter = as.factor(ifelse(cover_letter == 0, "No", "Yes"))) %>% 
+  mutate(cv = as.factor(ifelse(cv == 0, "No", "Yes"))) %>% 
+  mutate(pass = as.factor(ifelse(pass == 0, "No", "Yes")))
+
+par(mfrow = c(1, 2))
+# proportion of successful applicants within each sex group
+hire_phase1_temp %>% 
+  ggplot(aes(x = cv, fill = as.factor(pass))) +
+  geom_bar(position = "fill") +
+  facet_wrap(~gender) +
+  scale_fill_manual(values = c("#fa8154", "#51c6b9")) +
+  ylab("Proportion") +
+  theme_minimal() +
+  labs(fill = "Pass", x = "CV", y = "Proportion")
+  
+
+# proportion of successful applicants vs. gender and cover letter
+hire_phase1_temp %>% 
+  ggplot(aes(x = cover_letter, fill = as.factor(pass))) +
+  geom_bar(position = "fill") +
+  facet_wrap(~gender) +
+  scale_fill_manual(values = c("#fa8154", "#51c6b9"))+
+  ylab("Proportion") +
+  theme_minimal() +
+  labs(fill = "Pass", x = "Cover letter", y = "Proportion")
+```
+
+Table 2: Applicants' total score on the interview vs. whether they pass phase III
+
+```{r}
+hire_2_3 <- hire_phase3 %>% 
+  mutate(total = interviewer_rating_1 + interviewer_rating_2)%>% 
+  arrange(desc(total)) %>% 
+  left_join(hire_phase2, by = "applicant_id") %>% 
+  select(applicant_id, gender, total, pass_final)
+
+colnames(hire_2_3) <- c("Applicant id", "Gender", "Total", "Pass")
+
+knitr::kable(hire_2_3)
+```
+
 
 ### Interpretation on summary tables before model fitting
 #### Make any modifications if you want. btw originial version on google doc
@@ -133,20 +159,24 @@ At this time, it seems that men are more likely to be a potential candidates in 
 
 ### Models
 
-Table 1: Coefficient estimates for the logistic model built for hiring phase-I
+Table 3: Coefficient estimates for the logistic model built for hiring phase-I
 
-```{r, warning=TRUE}
+```{r}
+# filter out observations without cv or cover letter
+hire_phase1_filtered <- hire_phase1 %>%
+  filter(cv == 1) %>%
+  filter(cover_letter == 1)
+
 # build model
-hire1_mod_wg <- glm(pass ~ gender + cv + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
-summary(hire1_mod_wg)
-hire1_ci <- confint(hire1_mod_wg)
+hire1_mod <- glm(pass ~ gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1_filtered)
 
 # table for reporting
-ests_h1 <- format(round(exp(summary(hire1_mod_wg)$coef)[, 1], 2), nsmall = 2)
-cis_h1 <- format(round(exp(hire1_ci), 6), nsmall = 2)
+ests_h1 <- format(round(exp(summary(hire1_mod)$coef)[, 1], 2), nsmall = 2)
+hire1_ci <- confint(hire1_mod)
+cis_h1 <- round(exp(hire1_ci), 6)[-1,]
 cis_h1 <- str_c("(", trimws(cis_h1[, 1]), ", ", cis_h1[, 2], ")")
-pval_h1 <- format(round(summary(hire1_mod_wg)$coefficients[, 4], 4), 2)
-hire1_rownames <- c("Baseline odds", "Gender: Prefer not to say", "Gender: Woman", "CV", "GPA", "Extracurriculars", "Work experience")
+pval_h1 <- round(summary(hire1_mod)$coefficients[, 4], 4)
+hire1_rownames <- c("Baseline odds", "GPA", "Extracurriculars", "Work experience")
 
 hire1_colnames <- c("Estimates", "95% CI", "P-value")
 
@@ -156,21 +186,26 @@ colnames(hire1_mod_table) <- hire1_colnames
 knitr::kable(hire1_mod_table, align = c("r", "r"))
 ```
 
+```{r}
+# hire1_mod_wg <- glm(pass ~ gender + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1_filtered)
+# lmtest::lrtest(hire1_mod, hire1_mod_wg)
+```
 
-Table 2: Coefficient estimates for the logistic model built for hiring phase-II
+
+Table 4: Coefficient estimates for the logistic model built for hiring phase-II
 
 ```{r}
 # build model
-hire2_mod_wg <- glm(pass~gender + technical_skills + writing_skills + leadership_presence + speaking_skills, family = "binomial", data = hire_phase2)
+hire2_mod <- glm(pass~technical_skills + writing_skills + leadership_presence + speaking_skills, family = binomial(), data = hire_phase2)
 
-hire2_ci <- confint(hire2_mod_wg)
+hire2_ci <- confint(hire2_mod)
 
 # table for reporting
-ests_h2 <- format(round(exp(summary(hire2_mod_wg)$coef)[, 1], 2), nsmall = 2)
-cis_h2 <- format(round(exp(hire2_ci), 6), nsmall = 2)
+ests_h2 <- format(round(exp(summary(hire2_mod)$coef)[, 1], 2), nsmall = 2)
+cis_h2 <- round(exp(hire2_ci), 6)
 cis_h2 <- str_c("(", trimws(cis_h2[, 1]), ", ", cis_h2[, 2], ")")
-pval_h2 <- format(round(summary(hire2_mod_wg)$coefficients[, 4], 4), 2)
-hire2_rownames <- c("Baseline odds", "Gender: Prefer not to say", "Gender: Woman", "Technical skills", "Writing skills", "Leadership_presence", "Speaking_skills")
+pval_h2 <- round(summary(hire2_mod)$coefficients[, 4], 4)
+hire2_rownames <- c("Baseline odds", "Technical skills", "Writing skills", "Leadership_presence", "Speaking_skills")
 
 hire2_colnames <- c("Estimates", "95% CI", "P-value")
 
@@ -178,6 +213,12 @@ hire2_mod_table <- cbind(ests_h2, cis_h2, pval_h2)
 rownames(hire2_mod_table) <- hire2_rownames
 colnames(hire2_mod_table) <- hire2_colnames
 knitr::kable(hire2_mod_table, align = c("r", "r"))
+```
+
+```{r}
+# hire2_mod_wg <- glm(pass~gender + technical_skills + writing_skills + leadership_presence + speaking_skills, family = binomial(), data = hire_phase2)
+# 
+# lmtest::lrtest(hire2_mod, hire2_mod_wg)
 ```
 
 

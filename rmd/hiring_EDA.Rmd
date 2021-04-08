@@ -48,12 +48,12 @@ hire_phase1 <- hire_phase1 %>%
   mutate(cv = as.factor(cv))
 
 
-# proportion of successful applicants within each sex gruop
+# proportion of successful applicants within each sex group
 hire_phase1 %>% 
   ggplot(aes(x = cv, fill = as.factor(pass))) +
   geom_bar(position = "fill") +
   facet_wrap(~gender) +
-  scale_fill_grey() +
+  scale_fill_manual(values = c("#fa8154", "#51c6b9")) +
   ylab("Proportion") +
   theme_minimal() +
   labs(fill = "Pass", x = "CV", y = "Proportion")
@@ -65,7 +65,7 @@ hire_phase1 %>%
   ggplot(aes(x = cover_letter, fill = as.factor(pass))) +
   geom_bar(position = "fill") +
   facet_wrap(~gender) +
-  scale_fill_grey() +
+  scale_fill_manual(values = c("#fa8154", "#51c6b9"))+
   ylab("Proportion") +
   theme_minimal() +
   labs(fill = "Pass", x = "Cover letter", y = "Proportion")
@@ -78,15 +78,13 @@ hire_phase1 %>%
 ## Build model
 
 ```{r}
-# hire_phase1_filtered <- hire_phase1 %>% 
-#   filter(cv == 1) %>% 
-#   filter(cover_letter == 1)
+hire_phase1_filtered <- hire_phase1 %>%
+  filter(cv == 1) %>%
+  filter(cover_letter == 1)
 
-hire1_mod <- glm(pass ~ gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
+hire1_mod <- glm(pass ~ gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1_filtered)
 
-hire1_mod_wg <- glm(pass ~ gender + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1)
-
-# hire1_mod_fil <- glm(pass ~ gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1_filtered)
+hire1_mod_wg <- glm(pass ~ gender + gpa + extracurriculars + work_experience, family = binomial(), data = hire_phase1_filtered)
 
 summary(hire1_mod)
 summary(hire1_mod_wg)
@@ -106,20 +104,20 @@ hire_phase2 <- hire_phase2 %>%
   mutate(pass = ifelse(applicant_id %in% success_2, 1, 0))
 
 # getting some summary statistics for gender
-temp<- hire_phase2 %>% 
-  filter(pass == 1 & gender == "Man") 
-mean(temp$technical_skills)
-mean(temp$writing_skills)
-mean(temp$speaking_skills)
-
-temp1 <- hire_phase2 %>%
-  filter(pass == 1 & gender == "Woman")
-mean(temp1$technical_skills)
-mean(temp1$writing_skills)
-mean(temp1$speaking_skills)
-
-summary(temp)
-summary(temp1)
+# temp<- hire_phase2 %>% 
+#   filter(pass == 1 & gender == "Man") 
+# mean(temp$technical_skills)
+# mean(temp$writing_skills)
+# mean(temp$speaking_skills)
+# 
+# temp1 <- hire_phase2 %>%
+#   filter(pass == 1 & gender == "Woman")
+# mean(temp1$technical_skills)
+# mean(temp1$writing_skills)
+# mean(temp1$speaking_skills)
+# 
+# summary(temp)
+# summary(temp1)
 ```
 
 ### Visualizations
