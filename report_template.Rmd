@@ -10,7 +10,7 @@ output:
     toc: true
     toc_depth: 2
 titlepage: true
-titlepage-color: "#51c6b9"
+titlepage-color: "51c6b9"
 titlepage-text-color: "FFFFFF"
 titlepage-rule-color: "FFFFFF"
 titlepage-rule-height: 2
@@ -100,17 +100,17 @@ Table 1: Conditional probability table for the three phases of hiring
 | Gender            | Phase I       |       | Phase II      |       | Phase III     |       |
 |-------------------|---------------|-------|---------------|-------|---------------|-------|
 |                   | Does not pass | Pass  | Does not pass | Pass  | Does not pass | Pass  |
+|-------------------|---------------|-------|---------------|-------|---------------|-------|
 | Man               | 0.467         | 0.483 | 0.468         | 0.682 | 0.583         | 0.800 |
 | Prefer not to say | 0.026         | 0.010 | 0.011         | 0.000 |               |       |
 | Woman             | 0.508         | 0.507 | 0.522         | 0.318 | 0.417         | 0.200 |
 
-```{r, fig.cap="Proportion of people passed phase I by gender and cv/cover letter"}
+```{r, fig.cap="Proportion of people passed phase I by gender and cv"}
 hire_phase1_temp <- hire_phase1 %>% 
   mutate(cover_letter = as.factor(ifelse(cover_letter == 0, "No", "Yes"))) %>% 
   mutate(cv = as.factor(ifelse(cv == 0, "No", "Yes"))) %>% 
   mutate(pass = as.factor(ifelse(pass == 0, "No", "Yes")))
 
-par(mfrow = c(1, 2))
 # proportion of successful applicants within each sex group
 hire_phase1_temp %>% 
   ggplot(aes(x = cv, fill = as.factor(pass))) +
@@ -120,7 +120,9 @@ hire_phase1_temp %>%
   ylab("Proportion") +
   theme_minimal() +
   labs(fill = "Pass", x = "CV", y = "Proportion")
-  
+```
+
+```{r, fig.cap="Proportion of people passed phase I by gender and cover letter"}
 
 # proportion of successful applicants vs. gender and cover letter
 hire_phase1_temp %>% 
